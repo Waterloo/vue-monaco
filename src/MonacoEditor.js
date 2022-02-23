@@ -5,6 +5,9 @@ export default {
 
   props: {
     original: String,
+    modelValue:{
+      type:String 
+    },
     value: {
       type: String,
       required: true
@@ -38,14 +41,11 @@ export default {
         }
       }
     },
-
+    modelValue(newValue){
+      this.updateEditorValue(newValue)
+    },
     value(newValue) {
-      if (this.editor) {
-        const editor = this.getModifiedEditor()
-        if (newValue !== editor.getValue()) {
-          editor.setValue(newValue)
-        }
-      }
+      this.updateEditorValue(newValue)
     },
 
     original(newValue) {
@@ -100,7 +100,7 @@ export default {
 
       const options = assign(
         {
-          value: this.value,
+          value: this.modelValue || this.value,
           theme: this.theme,
           language: this.language
         },
@@ -114,7 +114,7 @@ export default {
           this.language
         )
         const modifiedModel = monaco.editor.createModel(
-          this.value,
+          this.modelValue || this.value,
           this.language
         )
         this.editor.setModel({
@@ -129,8 +129,9 @@ export default {
       const editor = this.getModifiedEditor()
       editor.onDidChangeModelContent(event => {
         const value = editor.getValue()
-        if (this.value !== value) {
+        if (this.modelValue || this.value !== value) {
           this.$emit('change', value, event)
+          this.$emit("update:modelValue", value);
         }
       })
 
@@ -152,6 +153,15 @@ export default {
 
     getOriginalEditor() {
       return this.diffEditor ? this.editor.getOriginalEditor() : this.editor
+    },
+
+    updateEditorValue(value){
+      if (this.editor && this.diffEditor) {
+        const editor = this.getOriginalEditor()
+        if (value !== editor.getValue()) {
+          editor.setValue(value)
+        }
+      }
     },
 
     focus() {
